@@ -635,3 +635,416 @@
 ; LLists
 (define list-tracks
   (read-itunes-as-lists ITUNES-LOCATION))
+
+;; Exercise 205
+
+(define ASSOC1 (list "Track ID" 183))
+(define ASSOC2 (list "Name" "Born a Crime"))
+(define ASSOC3 (list "Artist" "Trevor Noah"))
+(define ASSOC4 (list "Album Artist" "Trevor Noah"))
+(define ASSOC5 (list "Genre" "Audiobook"))
+(define ASSOC6 (list "Kind" "Audible file"))
+(define ASSOC7 (list "Size" 254678069))
+(define ASSOC8 (list "Total Time" 31493596))
+(define ASSOC9 (list "Protected" #true))
+
+(define LASSOC1 (list ASSOC1 ASSOC2 ASSOC3
+                      ASSOC4 ASSOC5 ASSOC6
+                      ASSOC7 ASSOC8 ASSOC9))
+
+(define ASSOC10 (list "Track ID" 197))
+(define ASSOC11 (list "Name" "15 Step"))
+(define ASSOC12 (list "Artist" "Radiohead"))
+(define ASSOC13 (list "Album" "In Rainbows"))
+(define ASSOC14 (list "Genre" "Alternative Rock"))
+(define ASSOC15 (list "Kind" "MPEG audio file"))
+(define ASSOC16 (list "Size" 7620597))
+(define ASSOC17 (list "Total Time" 237322))
+
+(define LASSOC2 (list ASSOC10 ASSOC11 ASSOC12
+                      ASSOC13 ASSOC14 ASSOC15
+                      ASSOC16 ASSOC17))
+
+(define LLIST1 (list LASSOC1 LASSOC2))
+
+;; Exercise 206
+
+(check-expect (find-association "Artist" LASSOC2 "Default")
+              "Radiohead")
+(check-expect (find-association "Meep" LASSOC2 "Default")
+              "Default")
+
+; String LAssoc Any -> Association
+; produce the first Association whose first item is
+; equal to key, or default if there is no Association.
+(define (find-association key lassoc default)
+  (cond [(empty? lassoc) default]
+        [else (if (string=? key (first (first lassoc)))
+                  (first (rest (first lassoc)))
+                  (find-association key (rest lassoc) default))]))
+
+;; Exercise 207
+
+(check-expect (total-time/list LLIST1)
+              (+ 31493596 237322))
+
+; LList -> N
+; produces the total amount of play time
+
+(define (total-time/list llist)
+  (cond [(empty? llist) 0]
+        [else (+ (find-association "Total Time" (first llist) 0)
+                 (total-time/list (rest llist)))]))
+
+;; Exercise 208
+
+(check-expect (create-set (list "a")) (list "a"))
+(check-expect (create-set (list "a" "a")) (list "a"))
+
+(check-expect (boolean-attributes LLIST1)
+              (list "Protected"))
+
+; LLists -> (listof String)
+(define (boolean-attributes llist)
+  (create-set (boolean-attributes-wrapper llist)))
+
+(check-expect (boolean-attributes-wrapper LLIST1)
+              (list "Protected"))
+
+; LLists -> (listof String)
+(define (boolean-attributes-wrapper llist)
+  (cond [(empty? llist) empty]
+        [else (append (get-bool-attrs-from-lassoc (first llist))
+                    (boolean-attributes-wrapper (rest llist)))]))
+
+(check-expect (get-bool-attrs-from-lassoc LASSOC1) (list "Protected"))
+(check-expect (get-bool-attrs-from-lassoc LASSOC2) empty)
+
+; LAssoc -> (listof String)
+(define (get-bool-attrs-from-lassoc lassoc)
+  (cond [(empty? lassoc) empty]
+        [else (if (boolean? (second (first lassoc)))
+                  (cons (first (first lassoc))
+                        (get-bool-attrs-from-lassoc (rest lassoc)))
+                   (get-bool-attrs-from-lassoc (rest lassoc)))]))
+
+;;;; 12.3 Word Games, Composition Illustrated
+;;;; & 12.4 Word Games, the Heart of the Problem
+
+
+
+
+; A Word is one of:
+; - empty
+; - (cons 1String Word)
+; interpretation a Word is a list of 1Strings (letters)
+
+; A List-of-words is one of:
+; - empty
+; - (cons Word List-of-words)
+; interpretation a ListOfWords is a list of Words
+
+
+
+;; Exercise 209
+(check-expect (string->word "cat") (list "c" "a" "t"))
+
+; String -> Word
+; converts s to the chosen word representation
+(define (string->word s)
+  (explode s))
+
+(check-expect (word->string (list "c" "a" "t")) "cat")
+
+; Word -> String
+; converts w to a string
+(define (word->string w)
+  (implode w))
+
+;; Exercise 210
+
+(check-expect (words->strings (list (list "c" "a" "t")
+                                   (list "a" "c" "t")))
+              (list "cat" "act"))
+
+; List-of-words -> List-of-strings
+; turns all Words in low into Strings
+(define (words->strings low)
+  (cond [(empty? low) empty]
+        [else (cons (word->string (first low))
+                    (words->strings (rest low)))]))
+
+;; Exercise 211
+
+(check-expect (in-dictionary (list "cat" "cta" "act" "atc" "tac" "tca"))
+              (list "cat" "act"))
+
+; List-of-strings -> List-of-strings
+; picks out all those Strings that occur in the dictionary
+(define (in-dictionary los)
+  (cond [(empty? los) empty]
+        [else (if (member? (first los) AS-LIST)
+                  (cons (first los)
+                        (in-dictionary (rest los)))
+                  (in-dictionary (rest los)))]))
+
+
+(check-member-of (alternative-words "cat")
+                 (list "cat" "act")
+                 (list "act" "cat"))
+
+(check-member-of (alternative-words "rat")
+                 (list "rat" "tar" "art" "tra")
+                 (list "rat" "art" "tra" "tar")
+                 (list "art" "rat" "tar" "tra")
+                 (list "art" "tar" "rat" "tra")
+                 (list "tar" "rat" "art" "tra")
+                 (list "tar" "art" "rat" "tra"))
+
+; List-of-strings -> Boolean
+(define (all-words-from-rat? w)
+  (and (member? "rat" w)
+       (member? "art" w)
+       (member? "tar" w)))
+
+(check-satisfied (alternative-words "rat")
+                 all-words-from-rat?)
+
+; String -> List-of-strings
+; finds all words that use the same letters as s
+(define (alternative-words s)
+  (in-dictionary
+   (words->strings (arrangements (string->word s)))))
+
+
+;; Exercise 213
+
+(check-expect (insert-at-end "a" '())
+              (list "a"))
+(check-expect (insert-at-end "a" empty)
+              (cons "a" empty))
+
+(check-expect (insert-at-end "b" (list "a"))
+              (list "a" "b"))
+(check-expect (insert-at-end "b" (cons "a" empty))
+              (cons "a" (cons "b" empty)))
+
+(check-expect (insert-at-end "C" (list "a" "b"))
+              (list "a" "b" "C"))
+(check-expect (insert-at-end "C" (cons "a" (cons "b" empty)))
+              (cons "a" (cons "b" (cons "C" empty))))
+(check-expect (insert-at-end "D" (cons "a" (cons "b" (cons "c" empty))))
+              (cons "a" (cons "b" (cons "c" (cons "D" empty)))))
+
+; Any (listof Any) -> (listof Any)
+(define (insert-at-end elm lst)
+  (cond [(empty? lst) (cons elm empty)]
+        ;[(empty? (rest lst)) (cons elm empty)]
+        [else (cons (first lst)
+                    (insert-at-end elm (rest lst)))]))
+
+
+(check-expect (arrangements empty) (list empty))
+(check-expect (arrangements '()) (list '()))
+
+(check-expect (arrangements (list "a" "c" "t"))
+              (list (list "a" "c" "t")
+                    (list "c" "a" "t")
+                    (list "c" "t" "a")
+                    (list "a" "t" "c")
+                    (list "t" "a" "c")
+                    (list "t" "c" "a")))
+
+(check-expect (arrangements (list "d" "e" "r"))
+              (list (list "d" "e" "r")
+                    (list "e" "d" "r")
+                    (list "e" "r" "d")
+                    (list "d" "r" "e")
+                    (list "r" "d" "e")
+                    (list "r" "e" "d")))
+
+
+
+(check-expect (arrangements (list "a"))
+              (list (list "a")))
+(check-expect (arrangements (list "a" "b"))
+              (list (list "a" "b")
+                    (list "b" "a")))
+(check-expect (arrangements (list "c" "a" "t"))
+              (list (list "c" "a" "t")
+                    (list "a" "c" "t")
+                    (list "a" "t" "c")
+                    (list "c" "t" "a")
+                    (list "t" "c" "a")
+                    (list "t" "a" "c")))
+(check-expect (arrangements (list "d" "e" "r"))
+              (list (list "d" "e" "r")
+                    (list "e" "d" "r")
+                    (list "e" "r" "d")
+                    (list "d" "r" "e")
+                    (list "r" "d" "e")
+                    (list "r" "e" "d")))
+(check-expect (arrangements (list "e" "r"))
+              (list (list "e" "r")
+                    (list "r" "e")))
+
+; Word -> List-of-words
+; creates all rearrangements of the letters in w
+(define (arrangements w)
+  (cond [(empty? w) (list empty)]
+        [else (insert-everywhere/in-all-words (first w)
+                    (arrangements (rest w)))]))
+
+(check-expect (insert-everywhere/in-all-words
+               "d" (list (list "e" "r") (list "r" "e")))
+              (list (list "d" "e" "r")
+                    (list "e" "d" "r")
+                    (list "e" "r" "d")
+                    (list "d" "r" "e")
+                    (list "r" "d" "e")
+                    (list "r" "e" "d")))
+(check-expect (insert-everywhere/in-all-words "e" (list (list "r")))
+              (list (list "e" "r") (list "r" "e")))
+
+; 1String Words -> Words
+(define (insert-everywhere/in-all-words ltr ws)
+  (cond [(empty? ws) empty]
+        [else (append (insert-everywhere ltr (first ws))
+                      (insert-everywhere/in-all-words ltr (rest ws)))]))
+
+(check-expect (insert-everywhere "d" (list "e" "r"))
+              (list (list "d" "e" "r")
+                    (list "e" "d" "r")
+                    (list "e" "r" "d")))
+
+; 1String Word -> Words
+(define (insert-everywhere ltr w)
+  (insert-ltr-everywhere ltr empty w))
+
+(check-expect (insert-ltr-everywhere "a" '() (list "b" "c"))
+              (list (list "a" "b" "c")
+                    (list "b" "a" "c")
+                    (list "b" "c" "a")))
+
+; 1String (listof 1String) (listof 1String) -> (listof (listof 1String))
+(define (insert-ltr-everywhere ltr w v)
+  (cond [(empty? v) (cons (append w (list ltr)) empty)]
+        [else
+         (cons (append w (list ltr) v)
+               (insert-ltr-everywhere ltr (insert-at-end (first v) w) (rest v)))]))
+
+
+;; Exercise 214
+
+(check-expect ;; If that's what the dictionary says...
+ (alternative-words "dear")
+ (list "dear" "daer" "dare" "ared" "read"))
+
+;;;; Next few sections are world games
+
+;;;; 12.8 Finite State Machines
+
+; a (b|c)* d
+; a (b|c)* a
+
+; An FSM is one of:
+;   - '()
+;   - (cons Transition FSM)
+
+(define-struct transition [current next])
+; A Transition is a structure:
+;   (make-transition FSM-State FSM-State)
+
+; FSM-State is a Color.
+
+; interpretation An FSM represents the transitions that a
+; finite state machine can take from one state to another
+; in reaction to keystrokes
+
+;; Exercise 226
+
+(check-expect (state=? "red" "RED") #true)
+(check-expect (state=? "meep" "reD") #false)
+
+; FSM-State FSM-State -> Boolean
+(define (state=? in1 in2)
+  (and (image-color? in1) (image-color? in2)
+       (string=? (string-downcase in1)
+                 (string-downcase in2))))
+
+
+(define fsm-traffic (list (make-transition "red" "green")
+                          (make-transition "green" "yellow")
+                          (make-transition "yellow" "red")))
+
+;; Exercise 227
+
+(define bws (list "black" "white"))
+(define fsm-bw (list (make-transition (first bws) (first (rest bws)))
+                     (make-transition (first (rest bws)) (first bws))))
+
+(check-expect (state-as-colored-square
+               (make-fs fsm-traffic "red"))
+              (square 100 "solid" "red"))
+; SimulationState.v2 -> Image
+; renders a world state as an image
+(define (state-as-colored-square an-fsm)
+  (square 100 "solid" (fs-current an-fsm)))
+
+(check-expect
+ (find-next-state (make-fs fsm-traffic "red") "n")
+ (make-fs fsm-traffic "green"))
+(check-expect
+ (find-next-state (make-fs fsm-traffic "red") "a")
+ (make-fs fsm-traffic "green"))
+(check-expect
+ (find-next-state (make-fs fsm-traffic "green") "q")
+ (make-fs fsm-traffic "yellow"))
+(check-expect
+ (find-next-state (make-fs fsm-traffic "yellow") "a")
+ (make-fs fsm-traffic "red"))
+
+; SimulationState.v2 KeyEvent -> SimulationState.v2
+; finds the next state from ke and cs
+(define (find-next-state sims ke)
+  (make-fs (fs-fsm sims)
+           (find (fs-fsm sims) (fs-current sims))))
+
+;; Exercise 228
+
+(check-expect (find fsm-traffic "red") "green")
+(check-expect (find fsm-traffic "green") "yellow")
+(check-expect (find fsm-traffic "black") "not found: black")
+
+; FSM-State FSM -> FSM-State
+; finds the state representing current in transitions
+; and retrieves the next field
+(define (find lot clr)
+  (cond [(empty? lot) (string-append "not found: " clr)]
+        [else (if (state=? clr (transition-current (first lot)))
+                  (transition-next (first lot))
+                  (find (rest lot) clr))]))
+
+;(cons (make-transition Color Color) self)
+
+; FSM FSM-State -> SimulationState.v2
+; match the keys pressed with the given FSM
+(define (simulate.v2 an-fsm s0)
+  (big-bang (make-fs an-fsm s0)
+    [to-draw state-as-colored-square]
+    [on-key find-next-state]))
+
+
+(define-struct fs [fsm current])
+; A SimulationState.v2 is a structure:
+;   (make-fs FSM FSM-State)
+
+(simulate.v2 fsm-traffic "red")
+
+
+
+
+
+
+
+
