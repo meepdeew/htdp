@@ -1,6 +1,7 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname III-abstraction-ch14) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+(require test-engine/racket-tests)
 ;;;; 14 Similarities Everywhere
 
 (require 2htdp/image)
@@ -68,9 +69,11 @@
 (check-expect (add1* '()) '())
 (check-expect (add1* '(95)) '(96))
 (check-expect (add1* '(1 2 3 4)) '(2 3 4 5))
+
 (check-expect (plus5 '()) '())
 (check-expect (plus5 '(94)) '(99))
 (check-expect (plus5 '(1 2 3 4)) '(6 7 8 9))
+
 (check-expect (plus3 '()) '())
 (check-expect (plus3 '(3)) '(6))
 (check-expect (plus3 '(3 4)) '(6 7))
@@ -110,16 +113,31 @@
 
 ;;;; 14.2 Different Similarities
 
+(check-expect (small '() 5) '())
+(check-expect (small '(3) 5) '(3))
+(check-expect (small '(1 6 4) 5) '(1 4))
+
 ; Lon Number -> Lon
 ; select those numbers on l
 ; that are below t
+; (define (small l t)
+;   (cond [(empty? l) '()]
+;         [else
+;          (cond [(< (first l) t)
+;                 (cons (first l)
+;                       (small (rest l) t))]
+;                [else (small (rest l) t)])]))
+
 (define (small l t)
   (cond [(empty? l) '()]
-        [else
-         (cond [(< (first l) t)
+        [(< (first l) t)
                 (cons (first l)
                       (small (rest l) t))]
-               [else (small (rest l) t)])]))
+        [else (small (rest l) t)]))
+
+(check-expect (large '() 5) '())
+(check-expect (large '(3) 5) '())
+(check-expect (large '(1 6 4) 5) '(6))
 
 ; Lon Number -> Lon
 ; select those numbers on l
@@ -134,10 +152,11 @@
 
 (define (extract R l t)
   (cond [(empty? l) '()]
-        [else (cond [(R (first l) t)
-                     (cons (first l)
-                           (extract R (rest l) t))]
-                    [else (extract R (rest l) t)])]))
+        [else
+         (cond [(R (first l) t)
+                (cons (first l)
+                      (extract R (rest l) t))]
+               [else (extract R (rest l) t)])]))
 
 (check-expect (extract < '() 5) (small '() 5))
 (check-expect (extract < '(3) 5) (small '(3) 5))
@@ -208,7 +227,12 @@
 (define l2 (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14
                  15 16 17 18 19 20 21 22 23 24 25))
 
-;; use max
+;; (inf-1 l1) ; slow
+;; (inf-1 l2) ; slow
+;; (sup-1 l1) ; slow
+;; (sup-1 l2) ; slow
+
+;; min/max accept n args, but would defeat the purpose
 (define (minf l cb)
   (cond [(empty? (rest l)) (first l)]
         [else (minf (cons (cb (first l) (second l))
@@ -221,6 +245,23 @@
 (define (sup-2 l)
   (minf l max))
 
+(define (greater-of-two a b)
+  (if (> a b)
+      a b))
+
+(define (sup-3 l)
+  (minf l greater-of-two))
+
+(check-expect (sup-3 '(11 22 33)) 33)
+
+(check-expect (inf-2 '(11 22)) 11)
+(check-expect (inf-2 '(11 22 33)) 11)
+(check-expect (sup-2 '(11 22 33)) 33)
+
+;; Speed improvement: nothing to do with min/max
+;; Purely structural
+
+
 
 ;;;; 14.3 Similarities in Data Definitions
 
@@ -232,13 +273,16 @@
 ; - '()
 ; - (cons Number List-of-numbers-again)
 
+
 (define-struct point [hori veri])
+
 
 ; A Pair-boolean-string is a structure:
 ;   (make-point Boolean String)
 
 ; A Pair-number-image is a structure:
 ;   (make-point Number Image)
+
 
 ; A [CP H V] is a structure:
 ;   (make-point H V)
@@ -281,3 +325,4 @@
 ;;;; 14.5 Computing with Functions
 
 "end of thing"
+(test);; DrRacket does something like this behind the scenes
