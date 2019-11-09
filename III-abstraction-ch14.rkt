@@ -318,11 +318,150 @@
 ; - Number
 ; - (make-layer LNum)
 
+;"fish"
+;(make-layer "fish")
+(make-layer (make-layer "fish"))
+
+;1
+;(make-layer 1)
+(make-layer (make-layer 1))
+
+; An LX is one of:
+; - X
+; - (make-layer LX)
+
+; false
+;(make-layer false)
+(make-layer (make-layer #false))
+
+;; Exercise 241
+
+; An NEList-of-temperatures is one of:
+; - (cons CTemperature '())
+; - (cons CTemperature NEList-of-temperatures)
+; interpretation non-empty lists of Celsius temperatures
+
+; An NEList-of-Booleans
+; - (cons Boolean '())
+; - (cons Boolean NEList-of-Booleans)
+; interpretation non-empty list of Boolean values
+
+; An NEList-of
+; - (cons item '())
+; - (cons item NEList-of)
+; interpretation non-empty list of items
+
+;; Exercise 242
+
+; A [Maybe X] is one of;
+; - #false
+; - X
+
+; interpretation [Maybe String]
+; either false or a string
+
+; interpretation [Maybe [List-of-String]]
+; either false or a list of strings
+
+; interpretation [List-of [Maybe String]]
+; a list of items comprised of either false or a string
+
+
+; String [List-of String] -> [Maybe [List-of String]]
+; returns the remainder of los starting with s
+; #false otherwise
+
+(check-expect (occurs "a" (list "b" "a" "d" "e"))
+              (list "d" "e"))
+
+(check-expect (occurs "a" (list "b" "c" "d")) #f)
+
+(define (occurs s los)
+  (cond [(empty? los) #f]
+        [(equal? (car los) s) (cdr los)]
+        [else (occurs s (cdr los))]))
+
 
 
 ;;;; 14.4 Functions Are Values
 
+;; Exercise 243
+
+;(define (f x) x)
+
+; (cons f '())
+; the built-in function cons, the user-defined function f, and the value '()
+
+; (f f)
+; the user-defined function f and, again, the user-defined function f
+
+; (cons f (cons 10 (cons (f 10) '())))
+; the built-in function cons,
+; the user-defined function f,
+; the built-in function cons,
+; the primitive number 10,
+; the built-in function cons,
+; the user-defined function f,
+; the primitive number 10,
+; and the value '()
+
+;; Exercise 244
+
+(define (aaa x) (x 10))
+; calls the input function x with the value 10 as an argument.
+
+(define (bbb x) (x bbb))
+; calls the input function x with the function itself as the input.
+
+(define (ccc x y) (x 'a y 'b))
+; This one works if x is a function for certain functions.
+; Depending on the function x, y may or may not need to be a function.
+
+;; Exercise 245
+
+; Number -> Number
+(define (function=at-1.2-3-and-5.775 f1 f2)
+  (and (equal? (f1 1.2)
+               (f2 1.2))
+       (equal? (f1 3)
+               (f2 3))
+       (equal? (f1 5.775)
+               (f2 5.775))))
+
+; Function Function -> Boolean
+; (define (function=? f1 f2) ...)
+; Probably not possible to define a function that determines
+; whether two functions are identitical because we cannot
+; test every possible input.
+
+; "easily definable idea for which you cannot define a function"
+
+
 ;;;; 14.5 Computing with Functions
+
+(check-expect
+ (extract < '() 5)
+ '())
+
+(check-expect (extract < (cons 4 '()) 5)
+              (cons 4 '()))
+
+(check-expect
+ (extract < (cons 6 (cons 4 '())) 5)
+ (cons 4 '()))
+
+;; Exercise 246, 247, 248, and 249 in DrRacket stepper
+
+(check-expect
+ (extract squared>? (list 3 4 5) 10)
+ (list 4 5))
+
+(define (f x) x)
+(cons f '())
+(f f)
+(cons f (cons 10 (cons (f 10) '())))
+
+
 
 "end of thing"
 (test);; DrRacket does something like this behind the scenes
