@@ -296,45 +296,53 @@
 
 ; Exercise 253
 
+;; See question, asked here:
+;; https://www.reddit.com/r/Racket/comments/ec5zuu/htdp_exercise_253_describe_collections_with_at/
+
+; 1)
 ; [Number -> Boolean]
 (check-expect (even? 4) #true)
 (check-expect (even? 1) #false)
 (check-error (even? 'foo))
 
+; 2)
 ; [Boolean String -> Boolean]
-(check-expect (boolean=?))
+(check-expect (equal? #true "true") #false)
 
-
+; 3)
 ; [Number Number Number -> Number]
 (check-expect (+ 1 2 3) 6)
 (check-error (+ 1 2 'foo))
 
+; 4)
 ; [Number -> [List-of Number]]
+(check-expect (list 5) '(5))
 
+; 5)
 ; [[List-of Number] -> Boolean]
+(check-expect (list? '(5)) #true)
 
 
 ; Exercise 254
 
-(check-expect (sort-n '(2 7 1 4) <) '(1 2 4 7))
+;; TODO
+;(check-expect (sort-n '(2 7 1 4) <) '(1 2 4 7))
 
 ;; [Listof Number [Number Number -> Boolean] -> Listof Number]
 (define (sort-n lon cb)
-  ())
-
-(check-expect)
+  ...)
 
 ;; [Listof String [String String -> Boolean] -> Listof String]
 (define (sort-s los cb)
-  ())
+  ...)
 
 ;; [Listof IR [IR IR -> Boolean] -> Listof IR]
 (define (sort-ir loir cb)
-  ())
+  ...)
 
 ;; [Listof X [X X -> Boolean] -> Listof X]
 (define (sort-generic listo cb)
-  ())
+  ...)
 
 ; Exercise 255
 
