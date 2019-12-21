@@ -2,7 +2,8 @@
 ;; about the language level of this file in a form that our tools can easily process.
 #reader(lib "htdp-intermediate-reader.ss" "lang")((modname III-abstraction-ch14) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require test-engine/racket-tests)
-;;;; 14 Similarities Everywhere
+
+;;;; 15 Designing Abstractions
 
 (require 2htdp/image)
 
@@ -28,7 +29,7 @@
 (check-expect (cf* '(10 20 30))
               (list (C2F 10) (C2F 20) (C2F 30)))
 
-; ]List-of IR] -> List-of-strings
+; [List-of IR] -> List-of-strings
 ; Inventory -> List-of-strings
 ; extracts the names of
 ; toys from an inventory
@@ -325,45 +326,124 @@
 
 ; Exercise 254
 
-;; TODO
-;(check-expect (sort-n '(2 7 1 4) <) '(1 2 4 7))
+;; From Chapter 11
+(check-expect (insert 2 (list 1 3)) (list 1 2 3))
+(check-expect (insert 2 (list 1)) (list 1 2))
+(check-expect (insert 2 (list 3)) (list 2 3))
+(check-expect (insert 2 (list)) (list 2))
 
-;; [Listof Number [Number Number -> Boolean] -> Listof Number]
+; Number List-of-numbers -> List-of-numbers
+; inserts n into the sorted list of numbers alon
+(define (insert n alon)
+  (cond [(empty? alon) (list n)]
+        [(< n (first alon)) (cons n alon)]
+        [else (cons (first alon)
+                    (insert n (rest alon)))]))
+
+(check-expect (ho-insert 3 (list 1 4) <) (list 1 3 4))
+(check-expect (ho-insert 3 (list 4 5) <) (list 3 4 5))
+(check-expect (ho-insert 6 (list 4) <) (list 4 6))
+(check-expect (ho-insert 6 (list 4 5) <) (list 4 5 6))
+(check-expect (ho-insert 3 (list) <) (list 3))
+
+;; [Number [List-of Number] [Number Number -> Boolean] -> [List-of Number]]
+(define (ho-insert n lon cb)
+  (cond [(empty? lon) (list n)]
+        [(cb n (first lon)) (cons n lon)]
+        [else (cons (first lon)
+                    (ho-insert n (rest lon) cb))]))
+
+
+(check-expect (sort-n '(2 7 1 4) <) '(1 2 4 7))
+(check-expect (sort-n '(4 1) <) '(1 4))
+(check-expect (sort-n '(3) <) '(3))
+(check-expect (sort-n '() <) empty)
+
+
+;; [[List-of Number] [Number Number -> Boolean] -> [List-of Number]]
 (define (sort-n lon cb)
-  ...)
+  (cond [(empty? lon) empty]
+        [else (ho-insert (first lon)
+                         (sort-n (rest lon) cb)
+                         cb)]))
 
-;; [Listof String [String String -> Boolean] -> Listof String]
+(check-expect (sort-s '("b" "c" "a") string<?) '("a" "b" "c"))
+(check-expect (sort-s '("f" "e" "b" "c" "a") string<?)
+              '("a" "b" "c" "e" "f"))
+
+;; [[List-of String] [String String -> Boolean] -> [List-of String]]
 (define (sort-s los cb)
-  ...)
+  (cond [(empty? los) empty]
+        [else (ho-insert (first los)
+                         (sort-s (rest los) cb)
+                         cb)]))
 
-;; [Listof IR [IR IR -> Boolean] -> Listof IR]
+(define (IR-compare ir1 ir2)
+  (< (IR-price ir1)
+     (IR-price ir2)))
+
+;; [[List-of IR] [IR IR -> Boolean] -> [List-of IR]]
 (define (sort-ir loir cb)
-  ...)
+  (sort-generic loir IR-compare empty))
 
-;; [Listof X [X X -> Boolean] -> Listof X]
-(define (sort-generic listo cb)
-  ...)
+;; [[List-of X] [X X -> Boolean] -> [List-of X]]
+(define (sort-generic listo cb base-case)
+  (cond [(empty? listo) base-case]
+        [else (ho-insert (first listo)
+                         (sort-s (rest listo) cb)
+                         cb)]))
 
 ; Exercise 255
 
+(check-expect (map-n (list 1 2 3) add1) (list 2 3 4))
+
+;; [[Listof Number] [Number -> Number] -> [Listof Number]]
+(define (map-n lon cb)
+  (cond [(empty? lon) empty]
+        [else (cons (cb (first lon))
+                    (map-n (rest lon) cb))]))
+
+(define (my-identity str) str)
+
+(check-expect (map-n (list "a" "b" "c") my-identity) (list "a" "b" "c"))
+
+;; [[Listof String] [String -> String] -> [Listof String]]
+(define (map-s los cb)
+  (cond [(empty? los) empty]
+        [else (cons (cb (first los))
+                    (map-s (rest los) cb))]))
+
+;; [[Listof X] [X -> X] -> [Listof X]]
+(define (map-generic listo cb base-case)
+  (cond [(empty? listo) base-case]
+        [else (cons (cb (first listo))
+                    (map-generic (rest listo) cb))]))
+
+;; (define (map1 k g)
+;;   (map-generic k g empty))
 
 
 
+;;;; 15.3 Single Point of Control
 
+;; Form an abstraction instead of copying and modifying any code.
 
+;;;; 15.4 Abstractions from Templates
 
+;; [X Y] [[List-of X] Y [X Y -> Y] -> Y]
+(define (reduce l base combine)
+  (cond
+    [(empty? l) base]
+    [else (combine (first l)
+                   (reduce (rest l) base combine))]))
 
+;; [List-of Number] -> Number
+;; (define (sum lon)
+;;   (reduce lon 0 +))
 
-;; C-(		paredit-backward-slurp-sexp
-;; C-)		paredit-forward-slurp-sexp
-
-;; C-{		paredit-backward-barf-sexp
-;; C-}		paredit-forward-barf-sexp
-
-;; <C-M-left>	paredit-backward-slurp-sexp
-;; <C-M-right>	paredit-backward-barf-sexp
-;; <C-left>	paredit-forward-barf-sexp
-;; <C-right>	paredit-forward-slurp-sexp
+;; [List-of Number] -> Number
+;; (define (product lon)
+;;   (reduce lon 1 *))
 
 
 "end"
