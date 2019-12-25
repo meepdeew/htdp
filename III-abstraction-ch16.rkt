@@ -151,19 +151,188 @@
 
 ;;;; 16.2 Local Definitions
 
+;; (local (def ...)
+;;   body-expression)
+
+; [List-of Addr] -> String
+; creates a string of first names,
+; sorted in alphabetical order,
+; separated and surrounded by blank spaces
+(define (listing.v2 l)
+  (local (; 1. extract names
+          (define names (map address-first-name l))
+          ; 2. sort the names
+          (define sorted (sort names string<?))
+          ; 3. append them, add spaces
+          ; String String -> String
+          ; appends two strings, prefix with " "
+          (define (helper s t)
+            (string-append " " s t))
+          (define concat+spaces
+            (foldr helper " " sorted)))
+    concat+spaces))
+
+;; ... (local ((define names  ...)
+;;             (define sorted ...)
+;;             (define concat+spaces
+;;               (local (; String String -> String
+;;                       (define (helper s t)
+;;                         (string-append " " s t)))
+;;                 (foldr helper " " sorted))))
+;;       concat+spaces) ...
+
+
+; [List-of Number] [Number Number -> Boolean] -> [List-of Number]
+; produces a version of alon, sorted according to cmp
+(define (sort-cmp alon0 cmp)
+  (local (; [List-of Number] -> [List-of Number]
+          ; produces the sorted version of alon
+          (define (isort alon)
+            (cond
+              [(empty? alon) '()]
+              [else
+               (insert (first alon) (isort (rest alon)))]))
+          
+          ; Number [List-of Number] -> [List-of Number]
+          ; inserts n into the sorted list of numbers alon
+          (define (insert n alon)
+            (cond
+              [(empty? alon) (cons n '())]
+              [else (if (cmp n (first alon))
+                        (cons n alon)
+                        (cons (first alon)
+                              (insert n (rest alon))))])))
+    (isort alon0)))
+
+;; Exercise 258
+
+; Image Polygon -> Image
+; adds an image of p to MT
+(define (render-polygon img p)
+  (local ((define MT (empty-scene 50 50))
+          ; Image NELoP -> Image
+          ; connects the Posns in p in an image
+          (define (connect-dots img p)
+            (cond
+              [(empty? (rest p)) MT]
+              [else (render-line (connect-dots img (rest p))
+                                 (first p)
+                                 (second p))]))
+
+          ; Image Posn Posn -> Image
+          ; draws a red line from Posn p to Posn q into im
+          (define (render-line im p q)
+            (scene+line
+             im (posn-x p) (posn-y p) (posn-x q) (posn-y q) "red"))
+          ;
+          (define connected-dots (connect-dots img p))
+          (define rendered-line (render-line connected-dots (first p) (last p))))
+    rendered-line))
+
+; Polygon -> Posn
+; extracts the last item from p
+(define (last p)
+  (cond
+    [(empty? (rest (rest (rest p)))) (third p)]
+    [else (last (rest p))]))
+
+;; Exercise 259
+
+;; Doing just arrangements so as not to worry about in-dictionary, etc.
+;; (define (alternative-words s)
+;;   (in-dictionary
+;;     (words->strings (arrangements (string->word s)))))
+;; but it would look something like:
+;; (define (alternative-words s)
+;;   (local ((define as-word (string->word s))
+;;           (define all (arrangements as-word))
+;;           (define as-strings (word->string all))
+;;           (matches (in-dictionary as-strings)))
+;;     matches))
+
+; Word -> List-of-words
+; creates all rearrangements of the letters in w
+(define (arrangements w)
+  (local ((define (insert-at-end item listo)
+            (reverse (cons item (reverse listo))))
+          ; 1String Word Word ->  [Listof Words]
+          (define (insert-in-word letter w-left w-used)
+            (cond
+              [(empty? w-left) (list (append w-used (list letter)))]
+              [else
+               (append (list (append w-used (list letter) w-left))
+                       (insert-in-word letter (rest w-left)
+                                       (insert-at-end (first w-left) w-used)))]))
+          ; String Word -> [Listof Words]
+          (define (insert-everywhere/in-this-word letter w)
+            (insert-in-word letter w (list)))
+          ; 1String List-of-words -> [Listof Words]
+          (define (insert-everywhere/in-all-words letter w)
+            (cond [(empty? w) '()]
+                  [else (append (insert-everywhere/in-this-word letter (first w))
+                                (insert-everywhere/in-all-words letter (rest w)))])))
+    (cond [(empty? w) (list '())]
+          [else (insert-everywhere/in-all-words
+                 (first w) (arrangements (rest w)))])))
+
+
+;; Exercise 260
+
+; Nelon -> Number
+; determines the smallest number on l
+(define (inf.v2 l)
+  (cond
+    [(empty? (rest l)) (first l)]
+    [else
+     (local ((define smallest-in-rest (inf.v2 (rest l))))
+       (if (< (first l) smallest-in-rest)
+           (first l)
+           smallest-in-rest))]))
+
+(check-expect
+ (inf.v2 (list 25 24 23 22 21 20 19 18 17 16 15 14 13
+               12 11 10 9 8 7 6 5 4 3 2 1))
+ 1)
+ 
+(check-expect
+ (inf.v2 (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
+               17 18 19 20 21 22 23 24 25))
+ 1)
+; Still quick
+
+;; Exercise 261
+
+(define-struct ir [price name])
+
+; Inventory -> Inventory
+; creates an Inventory from an-inv for all
+; those items that cost less than a dollar
+(define (extract1 an-inv)
+  (cond
+    [(empty? an-inv) '()]
+    [else
+     (cond
+       [(<= (ir-price (first an-inv)) 1.0)
+        (cons (first an-inv) (extract1 (rest an-inv)))]
+       [else (extract1 (rest an-inv))])]))
+
+; Inventory -> Inventory
+; creates an Inventory from an-inv for all
+; those items that cost less than a dollar
+(define (extract2 an-inv)
+  (cond
+    [(empty? an-inv) '()]
+    [else
+     (local ((define cached-expr (extract1 (rest an-inv))))
+       (cond [(<= (ir-price (first an-inv)) 1.0)
+              (cons (first an-inv) cached-expr)]
+             [else cached-expr]))]))
+
+;; This does not help increase the speed at which the function computes its result at all.
+;; The computation, with and without the local expression, procedes exactly once independent
+;; execution of path.
+
 ;;;; 16.3 Local Definitions Add Expressive Power
-
-;; C-(		paredit-backward-slurp-sexp
-;; C-)		paredit-forward-slurp-sexp
-
-;; C-{		paredit-backward-barf-sexp
-;; C-}		paredit-forward-barf-sexp
-
-;; <C-M-left>	paredit-backward-slurp-sexp
-;; <C-M-right>	paredit-backward-barf-sexp
-;; <C-left>	paredit-forward-barf-sexp
-;; <C-right>	paredit-forward-slurp-sexp
-
 
 "end"
 
