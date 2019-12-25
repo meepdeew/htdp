@@ -5,6 +5,7 @@
 ;;;; 16 Using Abstractions
 
 (require 2htdp/image)
+(require 2htdp/universe)
 
 ; [X] N [N -> X] -> [List-of X]
 ; constructs a list by applying f to 0, 1, ..., (sub1 n)
@@ -329,10 +330,106 @@
              [else cached-expr]))]))
 
 ;; This does not help increase the speed at which the function computes its result at all.
-;; The computation, with and without the local expression, procedes exactly once independent
-;; execution of path.
+;; The recursive computation, with and without the local expression, procedes exactly
+;; once per function body, independent of execution of path.
 
 ;;;; 16.3 Local Definitions Add Expressive Power
+
+; An FSM is one of:
+;   – '()
+;   – (cons Transition FSM)
+ 
+(define-struct transition [current next])
+; A Transition is a structure:
+;   (make-transition FSM-State FSM-State)
+
+; FSM-State FSM-State -> Boolean
+(define (state=? in1 in2)
+  (and (image-color? in1) (image-color? in2)
+       (string=? (string-downcase in1)
+                 (string-downcase in2))))
+
+; FSM FSM-State -> FSM-State
+; matches the keys pressed by a player with the given FSM
+(define (simulate fsm s0)
+  (local (
+          (define (find-next-state s key-event)
+            (find fsm s)))
+    (big-bang s0
+              [to-draw state-as-colored-square]
+              [on-key find-next-state])))
+
+; FSM-State -> Image
+; renders current state as colored square
+(define (state-as-colored-square s)
+  (square 100 "solid" s))
+
+; FSM FSM-State -> FSM-State
+; finds the current state in fsm
+(define (find transitions current)
+  (cond
+    [(empty? transitions) (error "not found")]
+    [else
+     (local ((define s (first transitions)))
+       (if (state=? (transition-current s) current)
+           (transition-next s)
+           (find (rest transitions) current)))]))
+
+;; (simulate (list (make-transition "red" "green")
+;;                 (make-transition "green" "yellow")
+;;                 (make-transition "yellow" "red"))
+;;           "red")
+
+;; Exercise 262
+
+(check-expect (identityM 1)
+              (list (list 1)))
+
+(check-expect (identityM 2)
+              (list (list 1 0)
+                    (list 0 1)))
+
+(check-expect (identityM 3)
+              (list (list 1 0 0)
+                    (list 0 1 0)
+                    (list 0 0 1)))
+
+; Number -> [Listof [Listof Number]]
+(define (identityM n)
+  (matrix-helper 1 n))
+
+(check-expect (matrix-helper 1 1)
+              (list (list 1)))
+(check-expect (matrix-helper 1 2)
+              (list (list 1 0)
+                    (list 0 1)))
+(check-expect (matrix-helper 1 3)
+              (list (list 1 0 0)
+                    (list 0 1 0)
+                    (list 0 0 1)))
+
+; Number Number -> [Listof [Listof Number]]
+(define (matrix-helper cur n)
+  (cond [(> cur n) '()]
+        [else (cons (row-gen cur n)
+                    (matrix-helper (add1 cur) n))]))
+
+(check-expect (row-gen 1 1) (list 1))
+(check-expect (row-gen 1 2) (list 1 0))
+(check-expect (row-gen 2 2) (list 0 1))
+(check-expect (row-gen 1 3) (list 1 0 0))
+(check-expect (row-gen 2 3) (list 0 1 0))
+(check-expect (row-gen 3 3) (list 0 0 1))
+(check-expect (row-gen 1 4) (list 1 0 0 0))
+
+(define (zeros-except j)
+  (local ((define (current-1? i)
+            (if (= (add1 i) j) 1 0)))
+    current-1?))
+
+(define (row-gen x y)
+  (build-list y (zeros-except x)))
+
 
 "end"
 
