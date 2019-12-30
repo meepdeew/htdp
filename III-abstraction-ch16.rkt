@@ -434,7 +434,9 @@
 
 ;; Exercise 263: In DrRacket, step through:
 
-(inf.v2 (list 2 1 3))
+(check-expect
+ (inf.v2 (list 2 1 3))
+ 1)
 
 ;; Exercise 264: In DrRacket, step through:
 	
@@ -449,25 +451,93 @@
          (first l)
          largest-in-rest))]))
 
-(sup.v2 (list 2 1 3))
+(check-expect
+ (sup.v2 (list 2 1 3))
+ 3)
 
 ;; Exercise 265 (Need to move from Intermediate Student --> Intermediate Student with Lambda)
 
-((local ((define (f x) (+ (* 4 (sqr x)) 3))) f)
- 1)
-;; 7
+(check-expect
+ ((local ((define (f x) (+ (* 4 (sqr x)) 3))) f)
+  1)
+ 7)
 
 ;; Exercise 266
 
-((local ((define (f x) (+ x 3))
-         (define (g x) (* x 4)))
-   (if (odd? (f (g 1)))
-       f
-       g))
- 2)
-;; 5
+(check-expect 
+ ((local ((define (f x) (+ x 3))
+          (define (g x) (* x 4)))
+    (if (odd? (f (g 1)))
+        f
+        g))
+  2)
+ 5)
 
 ;;;; 16.5 Using Abstractions, by Example
+
+;; _Sample Problem_: Design add-3-to-all.
+;; The function consumes a list of Posns and adds 3 to the x-coordinates of each.
+
+(check-expect
+ (add-3-to-all (list (make-posn 3 1) (make-posn 0 0)))
+ (list (make-posn 6 1) (make-posn 3 0)))
+
+;; [Listof Posn] -> [Listof Posn]
+;; adds 3 to the x-coordinates of each in a list of Posns
+(define (add-3-to-all lop)
+  (local (; Posn -> Posn
+          ; add 3 to the x-coordinate of individual Posn
+          (define (add-3-to-1 p)
+            (make-posn (+ 3 (posn-x p))
+                       (posn-y p))))
+    (map add-3-to-1 lop)))
+
+;; _Sample Problem_: Design a function that eliminates all Posns with
+;; y-coordinates larger than 100 from some given list.
+
+
+(check-expect
+ (keep-good (list (make-posn 0 110) (make-posn 0 60)))
+ (list (make-posn 0 60)))
+
+;; [Listof Posn] -> [Listof Posn]
+;; eliminates Posns whose y-coordinate is > 100
+(define (keep-good lop)
+  (local (; Posn -> Boolean
+          ; return false if y-coordinate of p is > 100
+          (define (good? p)
+            (not (> (posn-y p) 100))))
+    (filter good? lop)))
+
+;; _Sample Problem_: Design a function that determines whether
+;; any of a list of Posns is close to some given position pt
+;; where “close” means a distance of at most 5 pixels.
+
+(define CLOSENESS 5)
+
+; Posn Posn Number -> Boolean
+; is the distance between p and q less than d
+(define (close-to p q d)
+  (local ((define (within-distance a b)
+            (< (abs (- a b)) 5)))
+    (and (within-distance (posn-x p) (posn-x q))
+         (within-distance (posn-y p) (posn-y q)))))
+
+(check-expect
+ (close? (list (make-posn 47 54) (make-posn 0 60))
+         (make-posn 50 50))
+ #true)
+(check-expect
+ (close? (list (make-posn 44 56) (make-posn 0 60))
+         (make-posn 50 50))
+ #false)
+
+; [Listof Posn] Posn -> Boolean
+; is any Posn on lop close to pt
+(define (close? lop pt)
+  (local ((define (is-one-close? p)
+            (close-to p pt CLOSENESS)))
+    (ormap is-one-close? lop)))
 
 ;;;; 16.6 Designing with Abstractions
 
