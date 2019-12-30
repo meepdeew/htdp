@@ -1,6 +1,6 @@
 ;; The first three lines of this file were inserted by DrRacket. They record metadata
 ;; about the language level of this file in a form that our tools can easily process.
-#reader(lib "htdp-intermediate-reader.ss" "lang")((modname III-abstraction-ch14) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
+#reader(lib "htdp-intermediate-lambda-reader.ss" "lang")((modname III-abstraction-ch16) (read-case-sensitive #t) (teachpacks ()) (htdp-settings #(#t constructor repeating-decimal #f #t none #f () #f)))
 (require test-engine/racket-tests)
 ;;;; 16 Using Abstractions
 
@@ -279,7 +279,7 @@
 
 ;; Exercise 260
 
-; Nelon -> Number
+; [Listof Number] -> Number
 ; determines the smallest number on l
 (define (inf.v2 l)
   (cond
@@ -430,6 +430,50 @@
 (define (row-gen x y)
   (build-list y (zeros-except x)))
 
+;;;; 16.4 Computing with local
+
+;; Exercise 263: In DrRacket, step through:
+
+(inf.v2 (list 2 1 3))
+
+;; Exercise 264: In DrRacket, step through:
+	
+; [Listof Number] -> Number
+; determines the largest number on l
+(define (sup.v2 l)
+  (cond
+    [(empty? (rest l)) (first l)]
+    [else
+     (local ((define largest-in-rest (sup.v2 (rest l))))
+       (if (> (first l) largest-in-rest)
+         (first l)
+         largest-in-rest))]))
+
+(sup.v2 (list 2 1 3))
+
+;; Exercise 265 (Need to move from Intermediate Student --> Intermediate Student with Lambda)
+
+((local ((define (f x) (+ (* 4 (sqr x)) 3))) f)
+ 1)
+;; 7
+
+;; Exercise 266
+
+((local ((define (f x) (+ x 3))
+         (define (g x) (* x 4)))
+   (if (odd? (f (g 1)))
+       f
+       g))
+ 2)
+;; 5
+
+;;;; 16.5 Using Abstractions, by Example
+
+;;;; 16.6 Designing with Abstractions
+
+;;;; 16.7 Finger Exercises: Abstraction
+
+;;;; 16.8 Projects: Abstraction
 
 "end"
 
