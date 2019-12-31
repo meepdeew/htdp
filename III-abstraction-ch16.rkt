@@ -11,25 +11,25 @@
 ; constructs a list by applying f to 0, 1, ..., (sub1 n)
 ; (build-list n f) == (list (f 0) ... (f (- n 1)))
 ; (define (build-list n f) ...)
- 
+
 ; [X] [X -> Boolean] [List-of X] -> [List-of X]
 ; produces a list from those items on lx for which p holds 
 ; (define (filter p lx) ...)
- 
+
 ; [X] [List-of X] [X X -> Boolean] -> [List-of X]
 ; produces a version of lx that is sorted according to cmp
 ; (define (sort lx cmp) ...)
- 
+
 ; [X Y] [X -> Y] [List-of X] -> [List-of Y]
 ; constructs a list by applying f to each item on lx
 ; (map f (list x-1 ... x-n)) == (list (f x-1) ... (f x-n))
 ; (define (map f lx) ...)
- 
+
 ; [X] [X -> Boolean] [List-of X] -> Boolean
 ; determines whether p holds for every item on lx
 ; (andmap p (list x-1 ... x-n)) == (and (p x-1) ... (p x-n))
 ; (define (andmap p lx) ...)
- 
+
 ; [X] [X -> Boolean] [List-of X] -> Boolean
 ; determines whether p holds for at least one item on lx
 ; (ormap p (list x-1 ... x-n)) == (or (p x-1) ... (p x-n))
@@ -58,7 +58,7 @@
 ; applies f from right to left to each item in lx and b
 ; (foldr f b (list x-1 ... x-n)) == (f x-1 ... (f x-n b))
 ; (define (foldr f b lx) ...)
- 
+
 ; [X Y] [X Y -> Y] Y [List-of X] -> Y
 ; applies f from left to right to each item in lx and b
 ; (foldl f b (list x-1 ... x-n)) == (f x-n ... (f x-1 b))
@@ -132,9 +132,9 @@
 ;;           (f (- n 1)))]))
 
 (check-expect
-  (add-at-end (cons "c" (cons "b" '())) "a")
-  (cons "c" (cons "b" (cons "a" '()))))
- 
+ (add-at-end (cons "c" (cons "b" '())) "a")
+ (cons "c" (cons "b" (cons "a" '()))))
+
 (define (add-at-end l s)
   (cond [(empty? l) (list s)]
         [else (cons (first l)
@@ -294,7 +294,7 @@
  (inf.v2 (list 25 24 23 22 21 20 19 18 17 16 15 14 13
                12 11 10 9 8 7 6 5 4 3 2 1))
  1)
- 
+
 (check-expect
  (inf.v2 (list 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16
                17 18 19 20 21 22 23 24 25))
@@ -338,7 +338,7 @@
 ; An FSM is one of:
 ;   – '()
 ;   – (cons Transition FSM)
- 
+
 (define-struct transition [current next])
 ; A Transition is a structure:
 ;   (make-transition FSM-State FSM-State)
@@ -439,7 +439,7 @@
  1)
 
 ;; Exercise 264: In DrRacket, step through:
-	
+
 ; [Listof Number] -> Number
 ; determines the largest number on l
 (define (sup.v2 l)
@@ -448,8 +448,8 @@
     [else
      (local ((define largest-in-rest (sup.v2 (rest l))))
        (if (> (first l) largest-in-rest)
-         (first l)
-         largest-in-rest))]))
+           (first l)
+           largest-in-rest))]))
 
 (check-expect
  (sup.v2 (list 2 1 3))
@@ -540,6 +540,22 @@
     (ormap is-one-close? lop)))
 
 ;;;; 16.6 Designing with Abstractions
+
+(define DOT (circle 3 "solid" "red"))
+(define MT-SCENE (empty-scene 100 100))
+
+(check-expect (dots (list (make-posn 12 31)))
+              (place-image DOT 12 31 MT-SCENE))
+; [Listof Posn] -> Image
+; adds the Posns on lop to the empty scene
+(define (dots lop)
+  (local (; Posn Image -> Image
+          ; adds a DOT at p to Scene
+          (define (add-one-dot p scene)
+            (place-image DOT
+                         (posn-x p) (posn-y p)
+                         scene)))
+    (foldr add-one-dot MT-SCENE lop)))
 
 ;;;; 16.7 Finger Exercises: Abstraction
 
