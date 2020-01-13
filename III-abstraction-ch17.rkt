@@ -150,6 +150,74 @@
 
 ;;;; 17.2 Computing with lambda
 
+;; Exercise 282
+
+(define (f-plain x)
+  (* 10 x))
+
+(define f-lambda
+  (lambda (x)
+    (* 10 x)))
+
+; Number -> Boolean
+(define (compare x)
+  (= (f-plain x) (f-lambda x)))
+
+(check-expect
+ (compare (random 100000))
+ #true)
+
+(check-expect
+ (f-plain (f-plain 42))
+ 4200)
+
+(check-expect 
+ (f-lambda (f-lambda 42))
+ ((lambda (x) (* 10 x))
+ ((lambda (x) (* 10 x))
+  42)))
+
+(check-expect
+ ((lambda (x) (* 10 x)) 2)
+ (* 10 2))
+
+(check-expect
+ ((lambda (name rst) (string-append name ", " rst)) "Robby" "etc.")
+ (string-append "Robby" ", " "etc."))
+
+(check-expect
+ ((lambda (ir) (<= (ir-price ir) th)) (make-ir "bear" 10))
+ (<= (ir-price (make-ir "bear" 10)) th))
+
+;; Exercise 283
+
+(check-expect
+ (map (lambda (x) (* 10 x))
+      '(1 2 3))
+ (list (* 10 1) (* 10 2) (* 10 3)))
+
+(check-expect
+ (foldl (lambda (name rst)
+          (string-append name ", " rst))
+        "etc."
+        '("Matthew" "Robby"))
+ "Robby, Matthew, etc.")
+
+(check-expect
+ (filter (lambda (ir) (<= (ir-price ir) th))
+         (list (make-ir "bear" 10)
+               (make-ir "doll" 33)))
+ (list (make-ir "bear" 10)))
+
+;; Exercise 284
+
+((lambda (x) x) (lambda (x) x))
+
+((lambda (x) (x x)) (lambda (x) x))
+
+; infinite recursion
+; ((lambda (x) (x x)) (lambda (x) (x x)))
+
 ;;;; 17.3 Abstracting with lambda
 
 ;;;; 17.4 Specifying with lambda
