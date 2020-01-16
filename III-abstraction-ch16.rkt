@@ -746,6 +746,8 @@
 
 (check-expect (tabulate 4 my-identity2)
               (list 0 1 2 3))
+;; could use a local definition of my-identity2 in tabulate call
+;; instead of top-level definition.
 
 ; Number [Number -> Number] -> [Listof Number]
 ; tabulates cb res from 0..n-1 in a list
