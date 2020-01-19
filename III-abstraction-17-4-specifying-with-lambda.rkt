@@ -172,4 +172,4 @@
 
 "end 17.4"
 
-(test);; DrRacket does something like this behind the scenes
+(test);; DrRacket does something like this behind the scenes when run via IDE
