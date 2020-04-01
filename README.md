@@ -4,7 +4,11 @@ Working through the [How To Design Programs](https://www.htdp.org) exercises as 
 
 From somewhere on the Internet:
 
+---
+
 ![HTDP Review](./htdp-review.png)
+
+---
 
 I was initially watching Gregor Kiczales' accompanying [playlists](https://www.youtube.com/channel/UC7dEjIUwSxSNcW4PqNRQW8w) concurrent with the material, which were good and short enough to finish before the corresponding material in the book.
 
